@@ -13,7 +13,6 @@ Features:
 from duckduckgo_search import DDGS
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from functools import lru_cache
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import time
@@ -74,11 +73,13 @@ stats = Stats()
 # CACHE CONFIGURATION
 # ============================================================================
 
-# Large LRU cache for repeated queries
-@lru_cache(maxsize=5000)
+# Simple cache dictionary instead of lru_cache decorator
+search_cache = {}
+CACHE_MAX_SIZE = 5000
+
 def search_with_cache(query: str, max_results: int):
     """
-    Core search function with LRU caching
+    Core search function with manual caching
     
     Args:
         query: Search query string
@@ -87,6 +88,12 @@ def search_with_cache(query: str, max_results: int):
     Returns:
         List of search results or empty list on failure
     """
+    # Check cache first
+    cache_key = (query, max_results)
+    if cache_key in search_cache:
+        stats.cache_hits += 1
+        return search_cache[cache_key]
+    
     stats.cache_misses += 1
     
     # Clamp max_results to prevent abuse
@@ -108,6 +115,9 @@ def search_with_cache(query: str, max_results: int):
             
             if result_list:
                 stats.successful_searches += 1
+                # Cache the results
+                if len(search_cache) < CACHE_MAX_SIZE:
+                    search_cache[cache_key] = result_list
             else:
                 stats.failed_searches += 1
             
@@ -185,7 +195,7 @@ async def search(
     
     try:
         # Perform search
-        results = search_with_cache(q, n) if use_cache else search_with_cache.__wrapped__(q, n)
+        results = search_with_cache(q, n)
         
         # Format response
         return {
