@@ -102,7 +102,7 @@ def search_with_cache(query: str, max_results: int):
     # Retry with exponential backoff
     for attempt in range(3):
         try:
-            ddgs = DDGS()  # No 'with' statement needed
+            ddgs = DDGS()
             results = ddgs.text(
                 query=query,
                 region="wt-wt",
@@ -111,7 +111,13 @@ def search_with_cache(query: str, max_results: int):
                 max_results=clamped_max
             )
             
-            result_list = list(results) if results else []
+            # Convert results to list - handle different return types
+            if results is None:
+                result_list = []
+            elif hasattr(results, '__iter__'):
+                result_list = list(results)
+            else:
+                result_list = []
             
             if result_list:
                 stats.successful_searches += 1
