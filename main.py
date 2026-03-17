@@ -183,9 +183,8 @@ async def search(
     was_cached = False
     if use_cache:
         cache_key = (q, n)
-        # Check if this specific call would be cached
-        cache_info = search_with_cache.cache_info()
-        was_cached = cache_key in str(cache_info)
+        # Check if this specific call is in cache
+        was_cached = cache_key in search_cache
         
         if was_cached:
             stats.cache_hits += 1
