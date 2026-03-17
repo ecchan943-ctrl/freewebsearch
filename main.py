@@ -95,23 +95,23 @@ def search_with_cache(query: str, max_results: int):
     # Retry with exponential backoff
     for attempt in range(3):
         try:
-            with DDGS() as ddgs:
-                results = ddgs.text(
-                    query=query,
-                    region="wt-wt",
-                    safesearch="off",
-                    timelimit=None,
-                    max_results=clamped_max
-                )
-                
-                result_list = list(results) if results else []
-                
-                if result_list:
-                    stats.successful_searches += 1
-                else:
-                    stats.failed_searches += 1
-                
-                return result_list
+            ddgs = DDGS()  # No 'with' statement needed
+            results = ddgs.text(
+                query=query,
+                region="wt-wt",
+                safesearch="off",
+                timelimit=None,
+                max_results=clamped_max
+            )
+            
+            result_list = list(results) if results else []
+            
+            if result_list:
+                stats.successful_searches += 1
+            else:
+                stats.failed_searches += 1
+            
+            return result_list
                 
         except Exception as e:
             error_msg = str(e)
