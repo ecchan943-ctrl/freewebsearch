@@ -10,9 +10,9 @@ Features:
 - Health check & stats endpoints
 """
 
+from duckduckgo_search import DDGS
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from ddgs import DDGS
 from functools import lru_cache
 from pydantic import BaseModel
 from datetime import datetime, timedelta
