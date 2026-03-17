@@ -10,7 +10,7 @@ Features:
 - Health check & stats endpoints
 """
 
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -102,7 +102,7 @@ def search_with_cache(query: str, max_results: int):
     # Retry with exponential backoff
     for attempt in range(3):
         try:
-            ddgs = DDGS()
+            ddgs = DDGS()  # No 'with' statement needed
             results = ddgs.text(
                 query=query,
                 region="wt-wt",
@@ -111,13 +111,7 @@ def search_with_cache(query: str, max_results: int):
                 max_results=clamped_max
             )
             
-            # Convert results to list - handle different return types
-            if results is None:
-                result_list = []
-            elif hasattr(results, '__iter__'):
-                result_list = list(results)
-            else:
-                result_list = []
+            result_list = list(results) if results else []
             
             if result_list:
                 stats.successful_searches += 1
