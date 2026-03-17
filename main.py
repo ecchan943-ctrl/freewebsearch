@@ -183,27 +183,38 @@ async def search(
     # Rate limiting - be respectful to DuckDuckGo
     await asyncio.sleep(0.5)
     
-    # Perform search
-    results = search_with_cache(q, n) if use_cache else search_with_cache.__wrapped__(q, n)
-    
-    # Format response
-    return {
-        "query": q,
-        "results": results,
-        "count": len(results),
-        "requested": n,
-        "cached": was_cached,
-        "timestamp": datetime.now().isoformat(),
-        "stats": {
-            "total_requests": stats.total_requests,
-            "cache_hits": stats.cache_hits,
-            "cache_misses": stats.cache_misses,
-            "cache_hit_rate": f"{stats.cache_hit_rate():.1f}%",
-            "successful_searches": stats.successful_searches,
-            "failed_searches": stats.failed_searches,
-            "success_rate": f"{stats.success_rate():.1f}%"
+    try:
+        # Perform search
+        results = search_with_cache(q, n) if use_cache else search_with_cache.__wrapped__(q, n)
+        
+        # Format response
+        return {
+            "query": q,
+            "results": results,
+            "count": len(results),
+            "requested": n,
+            "cached": was_cached,
+            "timestamp": datetime.now().isoformat(),
+            "stats": {
+                "total_requests": stats.total_requests,
+                "cache_hits": stats.cache_hits,
+                "cache_misses": stats.cache_misses,
+                "cache_hit_rate": f"{stats.cache_hit_rate():.1f}%",
+                "successful_searches": stats.successful_searches,
+                "failed_searches": stats.failed_searches,
+                "success_rate": f"{stats.success_rate():.1f}%"
+            }
         }
-    }
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"Search error: {error_details}")
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Search failed: {str(e)}",
+            headers={"X-Error-Details": error_details[:200]}
+        )
 
 @app.get("/api/stats")
 async def get_stats():
